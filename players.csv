@@ -1,0 +1,11 @@
+player_id,team_id,name,number,position,photo_url
+p1,t1,Carlos Ruiz,1,GK,
+p2,t1,Pablo Díaz,4,DEF,
+p3,t1,Juan Soto,5,DEF,
+p4,t1,Leo Vera,8,MID,
+p5,t1,Marcos Gil,9,FWD,
+p6,t1,Suplente Uno,16,SUB,
+p7,t2,Matías Corso,1,GK,
+p8,t2,Gabriel Luna,3,DEF,
+p9,t2,Andrés Núñez,7,MID,
+p10,t2,Sergio Ríos,11,FWD,

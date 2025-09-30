@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Torneo Fútbol 7</title>
+  <style>
+    :root { --gap: 10px; --card: #f6f6f8; --ink:#222; --muted:#666; --brand:#0d6efd; }
+    *{box-sizing:border-box} body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fff;color:var(--ink)}
+    header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:12px 16px;z-index:3}
+    h1{margin:0;font-size:20px}
+    .container{display:grid;grid-template-columns:320px 1fr;gap:var(--gap);padding:16px}
+    aside, section{background:var(--card);border:1px solid #eee;border-radius:12px;padding:12px}
+    fieldset{border:1px solid #ddd;border-radius:8px;margin:0 0 12px;padding:10px}
+    legend{font-weight:700}
+    label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+    input, select, button, textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font:inherit}
+    button{cursor:pointer;background:var(--brand);color:#fff;border:none}
+    button.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .list{display:grid;gap:8px}
+    .item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #eee;border-radius:10px;padding:8px}
+    .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid #ddd;background:#fafafa}
+    .logo{width:28px;height:28px;border-radius:6px;object-fit:cover;border:1px solid #ddd;background:#fafafa}
+    .tag{font-size:11px;background:#eef5ff;color:#0b5ed7;padding:2px 6px;border-radius:999px;border:1px solid #dbe8ff}
+    .pill{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #ddd}
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+    .gallery img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid #eee;background:#fafafa}
+    .board{display:grid;gap:8px}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #eee;border-radius:10px;overflow:hidden}
+    th, td{font-size:13px;padding:8px;border-bottom:1px solid #eee;text-align:left}
+    th{background:#f4f6ff;font-weight:600}
+    .formation{display:grid;gap:8px;padding:10px;background:#fff;border:1px dashed #ddd;border-radius:10px}
+    .lane{display:flex;justify-content:center;gap:8px}
+    .player-card{display:flex;flex-direction:column;align-items:center;gap:6px;background:#fcfcfd;border:1px solid #eee;padding:6px;border-radius:10px;width:90px}
+    .player-card small{font-size:11px;color:#555;text-align:center}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    details summary{cursor:pointer;font-weight:600;margin:6px 0}
+    .warn{color:#b54708;background:#fff7ed;border:1px solid #ffedd5;padding:8px;border-radius:8px}
+    .success{color:#065f46;background:#ecfdf5;border:1px solid #d1fae5;padding:8px;border-radius:8px}
+    @media (max-width: 980px){ .container{grid-template-columns:1fr} }
+
+    /* ===== Mobile optimizations ===== */
+    @media (max-width: 640px){
+      :root { --gap: 8px; }
+      header{padding:10px 12px}
+      .container{padding:10px}
+      aside, section{padding:10px;border-radius:10px}
+      input, select, button, textarea{font-size:16px; min-height:44px}
+      button, .item{border-radius:12px}
+      .item{align-items:flex-start}
+      .item > .flex{gap:6px}
+      .avatar{width:44px;height:44px}
+      .logo{width:32px;height:32px}
+      .toolbar{
+        position:sticky; bottom:0; left:0; right:0;
+        background:#fff; border:1px solid #eee; border-radius:12px; padding:8px;
+        z-index:5; gap:6px; justify-content:space-between;
+      }
+      .toolbar button{flex:1; min-width:auto; padding:10px}
+      #tournamentBadge{display:none}
+      table{display:block; overflow-x:auto; white-space:nowrap}
+      th,td{padding:10px}
+      .player-card{width:100px}
+      .lane{gap:6px}
+      .gallery{grid-template-columns:repeat(2,1fr); gap:6px}
+    }
+
+    /* Botón flotante “arriba” */
+    #toTopBtn{
+      position:fixed; right:14px; bottom:84px; z-index:9;
+      display:none; border-radius:999px; padding:10px 12px;
+      background:#0d6efd; color:#fff; border:none; box-shadow:0 4px 14px rgba(0,0,0,.15);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>⚽ Torneo Fútbol 7 — MVP</h1>
+  <div style="position:absolute; right:16px; top:10px; display:flex; gap:8px">
+  <button class="ghost" id="btnLogin">Iniciar sesión</button>
+  <button class="ghost" id="btnLogout" style="display:none">Cerrar sesión</button>
+</div>
+
+</header>
+
+<div class="container">
+  <aside>
+    <fieldset>
+      <legend>Torneo</legend>
+      <label>Nombre</label><input id="tournamentName" placeholder="Copa GPL" />
+      <label>Formato</label>
+      <select id="tournamentMode">
+        <option value="league">Liga (puntos)</option>
+        <option value="knockout_qsf">Eliminación: 4tos → Semis → Final (+ 3º/4º)</option>
+      </select>
+      <div class="row">
+        <div>
+          <label>Fecha inicio</label><input type="date" id="startDate">
+        </div>
+        <div>
+          <label>Hora por defecto</label><input type="time" id="defaultTime" value="20:00">
+        </div>
+      </div>
+      <div class="flex">
+        <button id="saveTournament">Guardar Torneo</button>
+        <button class="ghost" id="resetAll">Reiniciar Todo</button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Equipo</legend>
+      <label>Nombre</label><input id="teamName" placeholder="Los Tigres">
+      <label>Logo (PNG/JPG)</label><input type="file" id="teamLogo" accept="image/*">
+      <label>Formación</label>
+      <select id="formation">
+        <option>1-3-2-1</option>
+        <option>1-2-2-2</option>
+        <option>1-3-1-2</option>
+      </select>
+      <button id="addTeam">Agregar Equipo</button>
+      <div class="list" id="teamsList"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Jugador</legend>
+      <label>Equipo</label><select id="playerTeam"></select>
+      <label>Nombre</label><input id="playerName" placeholder="Juan Pérez">
+      <div class="row">
+        <div><label>Dorsal</label><input id="playerNumber" type="number" inputmode="numeric" min="0" max="99" value="10"></div>
+        <div><label>Posición</label>
+          <select id="playerPosition">
+            <option value="GK">Arquero</option><option value="DEF">Defensa</option>
+            <option value="MID">Mediocampo</option><option value="FWD">Delantero</option>
+            <option value="SUB">Suplente</option>
+          </select>
+        </div>
+      </div>
+      <label>Foto (cara)</label><input type="file" id="playerPhoto" accept="image/*">
+      <button id="addPlayer">Agregar Jugador</button>
+      <details>
+        <summary>Importar CSV (equipos/jugadores/partidos)</summary>
+        <div class="grid3">
+          <div><label>teams.csv</label><input type="file" id="csvTeams" accept=".csv"></div>
+          <div><label>players.csv</label><input type="file" id="csvPlayers" accept=".csv"></div>
+          <div><label>matches.csv</label><input type="file" id="csvMatches" accept=".csv"></div>
+        </div>
+        <small class="warn">Tip: exportá .csv desde la app para ver el formato exacto.</small>
+      </details>
+    </fieldset>
+
+    <fieldset>
+      <legend>Fotos de Partidos</legend>
+      <input type="file" id="matchPhotos" accept="image/*" multiple>
+      <button id="addPhotos">Subir a galería</button>
+      <div class="gallery" id="photosGallery"></div>
+    </fieldset>
+  </aside>
+
+  <section>
+    <div class="toolbar">
+      <button id="genFixture">Generar Fixture</button>
+      <button class="ghost" id="exportJSON">Exportar .json</button>
+      <button class="ghost" id="exportCSVs">Exportar .csv</button>
+      <button class="ghost" id="syncFromSupabase">🔄 Sincronizar</button>
+      <span class="pill" id="tournamentBadge">—</span>
+    </div>
+
+    <!-- NAV compacta debajo de la toolbar -->
+    <div id="quickNav" class="flex" style="gap:6px; flex-wrap:nowrap; overflow-x:auto; padding:6px 0">
+      <button class="ghost" data-go="#sec-formaciones">⚽ Formaciones</button>
+      <button class="ghost" data-go="#sec-fixture">🗓 Fixture</button>
+      <button class="ghost" data-go="#sec-tabla">📊 Tabla</button>
+      <button class="ghost" data-go="#sec-plantel">👥 Plantel</button>
+      <button class="ghost" data-go="#sec-stats">🏅 Stats</button>
+    </div>
+
+    <details open id="sec-formaciones">
+      <summary>Equipos & Formaciones</summary>
+      <div id="formationsBoard" class="board"></div>
+    </details>
+
+    <details open id="sec-fixture">
+      <summary>Fixture & Resultados</summary>
+      <div class="list" id="matchesList"></div>
+    </details>
+
+    <details open id="sec-tabla">
+      <summary>Tabla / Bracket</summary>
+      <div id="standingsWrap"></div>
+      <div id="bracketWrap" class="board"></div>
+    </details>
+
+    <details open id="sec-plantel">
+      <summary>Plantel (editar / borrar)</summary>
+      <div id="playersAdmin" class="list"></div>
+    </details>
+
+    <details id="sec-stats">
+      <summary>Estadísticas</summary>
+      <div id="statsWrap"></div>
+    </details>
+
+    <button id="toTopBtn">↑</button>
+    <div id="toast" style="margin-top:12px;"></div>
+  </section>
+</div>
+
+<!-- Modal editar jugador -->
+<div id="playerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); align-items:center; justify-content:center; z-index:10;">
+  <div style="background:#fff; padding:16px; border-radius:12px; width:min(520px, 96vw); border:1px solid #eee;">
+    <h3 style="margin-top:0">Editar jugador</h3>
+    <div class="row">
+      <div><label>Nombre</label><input id="pm_name"></div>
+      <div><label>Dorsal</label><input id="pm_number" type="number" inputmode="numeric" min="0" max="99"></div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Posición</label>
+        <select id="pm_position">
+          <option value="GK">Arquero</option><option value="DEF">Defensa</option>
+          <option value="MID">Mediocampo</option><option value="FWD">Delantero</option>
+          <option value="SUB">Suplente</option>
+        </select>
+      </div>
+      <div>
+        <label>Equipo</label>
+        <select id="pm_team"></select>
+      </div>
+    </div>
+    <label>Nueva foto (opcional)</label>
+    <input id="pm_photo" type="file" accept="image/*">
+    <div class="flex" style="justify-content:flex-end; margin-top:12px">
+      <button class="ghost" id="pm_cancel">Cancelar</button>
+      <button id="pm_save">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal goles por jugador + MVP -->
+<div id="matchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); align-items:center; justify-content:center; z-index:11;">
+  <div style="background:#fff; padding:16px; border-radius:12px; width:min(860px, 96vw); border:1px solid #eee;">
+    <h3 style="margin-top:0">Cargar goles por jugador & MVP</h3>
+    <div id="mm_meta" class="flex" style="margin:8px 0 12px 0"></div>
+    <div class="row" style="gap:12px">
+      <div style="border:1px solid #eee; border-radius:10px; padding:10px">
+        <h4 id="mm_homeName" style="margin:.2rem 0"></h4>
+        <div id="mm_homeList" class="list"></div>
+        <div class="flex" style="margin-top:8px">
+          <small><strong>Total Home:</strong> <span id="mm_homeSum">0</span></small>
+          <small class="pill">Debe = <span id="mm_homeTarget">0</span></small>
+        </div>
+      </div>
+      <div style="border:1px solid #eee; border-radius:10px; padding:10px">
+        <h4 id="mm_awayName" style="margin:.2rem 0"></h4>
+        <div id="mm_awayList" class="list"></div>
+        <div class="flex" style="margin-top:8px">
+          <small><strong>Total Away:</strong> <span id="mm_awaySum">0</span></small>
+          <small class="pill">Debe = <span id="mm_awayTarget">0</span></small>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label><strong>MVP del partido</strong></label>
+      <select id="mm_mvp"></select>
+    </div>
+    <div id="mm_warn" class="warn" style="display:none; margin-top:10px">Los totales no coinciden con el resultado del partido.</div>
+    <div class="flex" style="justify-content:flex-end; margin-top:12px">
+      <button class="ghost" id="mm_autofill">Autoajustar</button>
+      <button class="ghost" id="mm_cancel">Cancelar</button>
+      <button id="mm_save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Supabase SDK y app -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</body>
+</html>
+
