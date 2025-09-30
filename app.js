@@ -66,7 +66,7 @@ const adapter = SupabaseAdapter({
   url: 'https://dqrxmphozgymkhaqhrui.supabase.co', // <- reemplazar
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxcnhtcGhvemd5bWtoYXFocnVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNjk4NjMsImV4cCI6MjA3NDc0NTg2M30.RLc48fHaDdJTDxSDl9vMrAWZjN80Aaee7H3useW2Msg',                         // <- reemplazar
   bucket: 'f7-media',
-  tournamentId: null, // null: crea/usa un torneo y guarda su id en localStorage
+  tournamentId: '0aaab3f2-49a9-4148-86a2-a14a96f9b78f', // null: crea/usa un torneo y guarda su id en localStorage
 });
 // Si querés usar localStorage: const adapter = LocalAdapter();
 
@@ -1106,4 +1106,5 @@ function mapIndex(hdr, keys){
   });
   return idx;
 }
+
 
