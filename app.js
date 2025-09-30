@@ -1,12 +1,39 @@
-/* Torneo Fútbol 7 — MVP
-   - Mobile-first + quick nav + lazy images
-   - Persistencia: Supabase (adapter) o LocalStorage
+/* Torneo Fútbol 7 — MVP (mobile + Supabase + read-only por URL)
+   - NO hay await en top-level.
+   - Para vista pública: agregar ?view=public a la URL (oculta edición).
 */
 
 /* ====== Helpers DOM ====== */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const uid = () => crypto.randomUUID();
+
+/* ====== Solo lectura por URL ====== */
+const READ_ONLY = new URLSearchParams(location.search).get('view') === 'public';
+function renderReadOnly(){
+  if (!READ_ONLY) return;
+  const aside = document.querySelector('aside');
+  if (aside) aside.style.display = 'none';
+
+  ['genFixture','exportJSON','exportCSVs'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Desactivar inputs y ocultar "Guardar" en fixture
+  $$('#matchesList input[type="number"]').forEach(inp=>{
+    inp.disabled = true; inp.style.opacity = 0.6;
+  });
+  $$('#matchesList button').forEach(btn=>{
+    if (btn.textContent.trim().toLowerCase().includes('guardar')){
+      btn.style.display = 'none';
+    }
+  });
+
+  // Ocultar administración de jugadores
+  const playersAdmin = document.getElementById('playersAdmin');
+  if (playersAdmin) playersAdmin.style.display = 'none';
+}
 
 /* ====== Mobile helpers ====== */
 function smoothGoto(sel){
@@ -43,68 +70,15 @@ const adapter = SupabaseAdapter({
 });
 // Si querés usar localStorage: const adapter = LocalAdapter();
 
+/* ====== Estado ====== */
 const state = {
   tournament: { id: uid(), name: "Copa", mode: "league", startDate: "", defaultTime: "20:00" },
   teams: [], players: [], matches: [], photos: [],
 };
-// === Solo lectura básico por URL (?view=public) ===
-const READ_ONLY = new URLSearchParams(location.search).get('view') === 'public';
 
-function renderReadOnly(){
-  if (!READ_ONLY) return;
-
-  // 1) Ocultar panel lateral de edición entero
-  const aside = document.querySelector('aside');
-  if (aside) aside.style.display = 'none';
-
-  // 2) Ocultar acciones de edición en la toolbar
-  ['genFixture','exportJSON','exportCSVs'].forEach(id=>{
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-
-  // 3) Desactivar edición de resultados (fixture)
-  $$('#matchesList input[type="number"]').forEach(inp=>{
-    inp.disabled = true; inp.style.opacity = 0.6;
-  });
-  // Ocultar botón "Guardar" por partido
-  $$('#matchesList button').forEach(btn=>{
-    if (btn.textContent.trim().toLowerCase().includes('guardar')){
-      btn.style.display = 'none';
-    }
-  });
-
-  // 4) Ocultar administración de jugadores (editar/borrar)
-  const playersAdmin = document.getElementById('playersAdmin');
-  if (playersAdmin) playersAdmin.style.display = 'none';
-}
-
-let sessionUserId = null;
-
-async function signInEmail(){
-  const email = prompt("Ingresá tu email para recibir el link (magic link):");
-  if (!email) return;
-  const { data, error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href } });
-  if (error) { toast("Error al enviar email.", true); console.error(error); return; }
-  toast("Te enviamos un link de acceso a tu email.");
-}
-
-async function loadSession(){
-  const { data: { session } } = await supabase.auth.getSession();
-  sessionUserId = session?.user?.id || null;
-  $("#btnLogin").style.display = sessionUserId ? "none" : "inline-block";
-  $("#btnLogout").style.display = sessionUserId ? "inline-block" : "none";
-}
-
-supabase.auth.onAuthStateChange((_e, _s)=>{ loadSession().then(()=>renderReadOnly()); });
-
-init();
-await loadSession();
-$("#btnLogin").onclick = signInEmail;
-$("#btnLogout").onclick = ()=> supabase.auth.signOut();
-
+/* ====== Inicio (sin top-level await) ====== */
 async function init(){
-  // Intentá cargar remoto (si hay tid guardado). Si no, queda vacío.
+  // Cargar remoto si existe torneo guardado en adapter
   try{
     const remote = await adapter.load();
     if (remote) Object.assign(state, remote);
@@ -122,8 +96,11 @@ async function init(){
   bindSync();
 
   renderAll();
+  if (READ_ONLY) renderReadOnly();
 }
+init();
 
+/* ====== Persistencia ====== */
 function persist(){ adapter.save(state).catch(e=>console.error(e)); }
 
 /* ====== Tournament ====== */
@@ -305,6 +282,7 @@ function renderAll(){
   renderTables();
   renderStats();
   renderPlayersAdmin();
+
   if (READ_ONLY) renderReadOnly();
 }
 
@@ -392,7 +370,7 @@ function renderMatches(){
         toast("Resultado guardado.");
         return;
       }
-      openMatchModal(m);
+      if (!READ_ONLY) openMatchModal(m);
     };
     list.appendChild(row);
   });
@@ -516,6 +494,7 @@ function renderPlayersAdmin(){
 
 /* ====== Player Modal ====== */
 function openPlayerModal(playerId){
+  if (READ_ONLY) return; // no editar en modo público
   const p = state.players.find(x=>x.id===playerId);
   if (!p) return;
 
@@ -557,6 +536,7 @@ function openPlayerModal(playerId){
 }
 
 async function changePlayerPhoto(playerId){
+  if (READ_ONLY) return;
   const input = document.createElement("input");
   input.type = "file"; input.accept = "image/*";
   input.onchange = async ()=>{
@@ -573,6 +553,7 @@ async function changePlayerPhoto(playerId){
 
 /* ====== Match Modal (player goals + MVP) ====== */
 function openMatchModal(match){
+  if (READ_ONLY) return;
   const modal = $("#matchModal");
   const mm_meta = $("#mm_meta");
   const mm_homeName = $("#mm_homeName");
